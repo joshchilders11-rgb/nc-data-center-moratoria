@@ -294,7 +294,9 @@ def main() -> None:
         "records": len(df),
         "by_category": {c: int(counts.get(c, 0)) for c in (IN_EFFECT, CONSIDERING, ENDED_CAT, NO_ACTION)},
         "in_effect_by_level": {k: int(v) for k, v in effect["level"].value_counts().items()},
-        "in_effect_confirmed": int((~effect["jurisdiction"].isin(NEEDS_CONFIRMATION)).sum()),
+        # Counted as "needing confirmation" rather than "confirmed": a record that is
+        # not flagged is sourced, but not necessarily to a primary government record.
+        "in_effect_needing_confirmation": int(effect["jurisdiction"].isin(NEEDS_CONFIRMATION).sum()),
         "needs_confirmation": len(NEEDS_CONFIRMATION),
         "counties_containing_a_moratorium_in_effect": len(counties_in_effect),
         "expiration_dates_printed_in_source": int((eii == "FALSE").sum()),
@@ -328,7 +330,7 @@ def main() -> None:
                 f"| As of {summary['status_as_of']} | |",
                 "|---|---:|",
                 f"| **Moratoria or bans in effect** | **{by[IN_EFFECT]}** |",
-                f"| &nbsp;&nbsp;confirmed against a source | {summary['in_effect_confirmed']} |",
+                f"| &nbsp;&nbsp;of which still need confirmation | {summary['in_effect_needing_confirmation']} |",
                 f"| &nbsp;&nbsp;county · municipal · tribal | {lv.get('county', 0)} · {lv.get('municipal', 0)} · {lv.get('tribal', 0)} |",
                 f"| Counties containing one | {summary['counties_containing_a_moratorium_in_effect']} of 100 |",
                 f"| Adopted in August 2026 alone | {summary['adopted_in_august_2026']} |",

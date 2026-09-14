@@ -11,7 +11,7 @@ it in the browser. Click any shape for its details and source.
 | As of 2026-08-29 | |
 |---|---:|
 | **Moratoria or bans in effect** | **42** |
-| &nbsp;&nbsp;confirmed against a source | 39 |
+| &nbsp;&nbsp;of which still need confirmation | 3 |
 | &nbsp;&nbsp;county · municipal · tribal | 20 · 21 · 1 |
 | Counties containing one | 34 of 100 |
 | Adopted in August 2026 alone | 11 |
@@ -36,15 +36,15 @@ it in the browser. Click any shape for its details and source.
 actions, so a county with no moratorium can still contain towns that have one —
 Buncombe County has none, while Asheville and Woodfin both do.
 
-**Black outlines** mark records that could not be confirmed against a primary
-source. Their popups say what is missing.
+**Black outlines** mark records that still need confirmation. Their popups say
+what is missing.
 
 ## Before you quote a number
 
 - **Status is as of August 29, 2026.** Moratoria are adopted, extended, and allowed
   to lapse within weeks. Check the source before relying on any single record.
-- **Say "39 confirmed", not "42".** The in-effect count includes records that
-  still need confirmation.
+- **Three of the 42 still need confirmation.** Quote 42 with that qualifier, or
+  leave those three out and quote 39.
 - **Most expiration dates are estimates.** Where a board said "twelve months",
   the calendar date is arithmetic. The map labels those dates *(estimated)*.
   Several moratoria also end early once ordinance work is finished, so a date is

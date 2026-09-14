@@ -12,7 +12,7 @@
     "county": 20,
     "tribal": 1
   },
-  "in_effect_confirmed": 39,
+  "in_effect_needing_confirmation": 3,
   "needs_confirmation": 4,
   "counties_containing_a_moratorium_in_effect": 34,
   "expiration_dates_printed_in_source": 12,
