@@ -1,11 +1,11 @@
 # North Carolina Data Center Moratoria
 
 A map of data center moratoria, bans, and related actions by North Carolina
-counties, municipalities, and tribal governments — with the source for each
-record, and with uncertain records marked as uncertain.
+counties, municipalities, and tribal governments — with a source for every
+action, and with uncertain records marked as uncertain.
 
 **[Open the interactive map →](data/nc_datacenter_moratoria.geojson)** · GitHub draws
-it in the browser. Click any shape for its details and source.
+it in the browser. Click any shape for its details.
 
 <!-- stats:start -->
 | As of 2026-08-29 | |
@@ -47,8 +47,8 @@ what is missing.
   leave those three out and quote 39.
 - **Most expiration dates are estimates.** Where a board said "twelve months",
   the calendar date is arithmetic. The map labels those dates *(estimated)*.
-  Several moratoria also end early once ordinance work is finished, so a date is
-  a ceiling rather than a fixed end.
+  Even a printed date can move: some moratoria end as soon as the ordinance work
+  behind them is finished, and boards can vote to extend them.
 - **34 counties counts land covered.** The Qualla Boundary spans five counties;
   counting it as a single jurisdiction gives 33.
 - **This is an informative overlay.** It records what local governments have
@@ -59,7 +59,7 @@ what is missing.
 
 | File | |
 |---|---|
-| [`data/nc_data_center_moratoriums.csv`](data/nc_data_center_moratoriums.csv) | The research table — one row per jurisdiction, with dates, terms, rationale, confidence, and source. **The source of truth.** |
+| [`data/nc_data_center_moratoriums.csv`](data/nc_data_center_moratoriums.csv) | The research table — one row per jurisdiction, with dates, terms, rationale, confidence, and a source for each action. **The source of truth.** |
 | [`data/nc_datacenter_moratoria.geojson`](data/nc_datacenter_moratoria.geojson) | The map layer, built from the table (WGS 84). |
 | [`data/summary.json`](data/summary.json) | The counts above, recomputed on every build. |
 | [`build/build_layer.py`](build/build_layer.py) | Joins the table to Census boundaries and writes the layer. |
@@ -72,12 +72,17 @@ python build/build_layer.py
 ```
 
 Boundaries download from the U.S. Census Bureau on first run. Pushing a change to
-the CSV rebuilds the layer, the summary, and the numbers in this README
+the CSV rebuilds the layer, the summary, and the table at the top of this README
 automatically.
+
+Status is judged as of `RESEARCH_CUTOFF` in `build/build_layer.py`, not the day
+the build runs. When you add newer research, move that date forward in the same
+change; otherwise a moratorium adopted after it will show as ended. The notes
+under *Before you quote a number* are written by hand and need updating too.
 
 ## How the records were built
 
-Each record was checked against agenda portals, adopted ordinances, and local
+Records were checked against agenda portals, adopted ordinances, and local
 news, preferring primary government records where they could be retrieved. The
 work corrected the source document it started from, which had attributed actions
 by identically named counties in **Georgia, Florida, Texas, and Arkansas** to
@@ -89,7 +94,7 @@ a well-dated record can still be unconfirmed.
 
 ## Sources
 
-- Jurisdiction records: the `source_url` column of the CSV, per row.
+- Jurisdiction records: the `source_url` column of the CSV.
 - Boundaries: U.S. Census Bureau, 2021 cartographic boundary files (counties,
   places, and American Indian areas).
 
