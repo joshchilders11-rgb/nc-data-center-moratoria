@@ -22,7 +22,7 @@ details.
 | Ended, declined, or replaced | 11 |
 | &nbsp;&nbsp;of which chose permanent regulation instead | 7 |
 | Checked, no action found | 65 |
-| Records needing confirmation | 10 |
+| Records needing confirmation | 9 |
 | Expiration dates estimated vs. printed in source | 34 vs. 14 |
 | Records changed by research after 2026-08-29 | 19 |
 <!-- stats:end -->
@@ -59,9 +59,9 @@ no popups. Use the interactive map or the picture above instead.
   and minutes are not posted yet. Quote 50 with that qualifier, or leave the six outlined
   records out and quote 44.
 - **Two records are open questions.** Perquimans County held its advertised hearing on
-  September 8 and has published nothing since; Charlotte's council took up a nine-month
-  extension on September 14 and no report of the outcome could be found. Both say so in
-  their popups.
+  September 8 and has published nothing since. Charlotte's proposed nine-month extension
+  never reached the council's September 14 agenda, so its pause still ends November 5
+  unless a later vote moves it. Both say so in their popups.
 - **Most expiration dates are estimates.** Where a board said "twelve months",
   the calendar date is arithmetic. The map labels those dates *(estimated)*.
   Even a printed date can move: some moratoria end as soon as the ordinance work
