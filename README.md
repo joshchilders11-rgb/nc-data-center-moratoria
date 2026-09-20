@@ -10,19 +10,21 @@ details.
 [![Map of North Carolina data center moratoria by category](data/map.png)](https://joshchilders11-rgb.github.io/nc-data-center-moratoria/)
 
 <!-- stats:start -->
-| As of 2026-08-29 | |
+| As of 2026-09-20 | |
 |---|---:|
-| **Moratoria or bans in effect** | **42** |
-| &nbsp;&nbsp;of which still need confirmation | 3 |
-| &nbsp;&nbsp;county · municipal · tribal | 20 · 21 · 1 |
-| Counties containing one | 34 of 100 |
-| Adopted in August 2026 alone | 11 |
-| Under consideration | 9 |
+| **Moratoria or bans in effect** | **50** |
+| &nbsp;&nbsp;of which still need confirmation | 6 |
+| &nbsp;&nbsp;county · municipal · tribal | 22 · 27 · 1 |
+| Counties containing one | 40 of 100 |
+| Adopted in August 2026 alone | 13 |
+| Adopted after 2026-08-29 | 5 |
+| Under consideration | 11 |
 | Ended, declined, or replaced | 11 |
 | &nbsp;&nbsp;of which chose permanent regulation instead | 7 |
-| Checked, no action found | 72 |
-| Records needing confirmation | 4 |
-| Expiration dates estimated vs. printed in source | 30 vs. 12 |
+| Checked, no action found | 65 |
+| Records needing confirmation | 10 |
+| Expiration dates estimated vs. printed in source | 34 vs. 14 |
+| Records changed by research after 2026-08-29 | 19 |
 <!-- stats:end -->
 
 ## Reading the map
@@ -39,23 +41,33 @@ actions, so a county with no moratorium can still contain towns that have one �
 Buncombe County has none, while Asheville and Woodfin both do.
 
 **Black outlines** mark records that still need confirmation. Their popups say
-what is missing.
+what is missing. Records that later research changed carry an **Updated** line in
+their popup saying what changed and when.
 
 GitHub's own preview of the GeoJSON file draws every shape in a single color, with
 no popups. Use the interactive map or the picture above instead.
 
 ## Before you quote a number
 
-- **Status is as of August 29, 2026.** Moratoria are adopted, extended, and allowed
-  to lapse within weeks. Check the source before relying on any single record.
-- **Three of the 42 still need confirmation.** Quote 42 with that qualifier, or
-  leave those three out and quote 39.
+- **Two dates matter.** The research table is a snapshot as of August 29, 2026. Every
+  county was then re-checked for news published through September 20, 2026, and what
+  changed is recorded record by record, with sources, in
+  [`data/research_updates.csv`](data/research_updates.csv). Moratoria are adopted,
+  extended and allowed to lapse within weeks, so check the source before relying on any
+  single record.
+- **Six of the 50 still need confirmation.** Most are September actions whose ordinances
+  and minutes are not posted yet. Quote 50 with that qualifier, or leave the six outlined
+  records out and quote 44.
+- **Two records are open questions.** Perquimans County held its advertised hearing on
+  September 8 and has published nothing since; Charlotte's council took up a nine-month
+  extension on September 14 and no report of the outcome could be found. Both say so in
+  their popups.
 - **Most expiration dates are estimates.** Where a board said "twelve months",
   the calendar date is arithmetic. The map labels those dates *(estimated)*.
   Even a printed date can move: some moratoria end as soon as the ordinance work
   behind them is finished, and boards can vote to extend them.
-- **34 counties counts land covered.** The Qualla Boundary spans five counties;
-  counting it as a single jurisdiction gives 33.
+- **40 counties counts land covered.** The Qualla Boundary spans five counties;
+  counting it as a single jurisdiction gives 39.
 - **This is an informative overlay.** It records what local governments have
   done. It does not assess whether any site is suitable, and it is not an
   exclusion filter.
@@ -64,7 +76,9 @@ no popups. Use the interactive map or the picture above instead.
 
 | File | |
 |---|---|
-| [`data/nc_data_center_moratoriums.csv`](data/nc_data_center_moratoriums.csv) | The research table — one row per jurisdiction, with dates, terms, rationale, confidence, and a source for each action. **The source of truth.** |
+| [`data/nc_data_center_moratoriums.csv`](data/nc_data_center_moratoriums.csv) | The research table — one row per jurisdiction, with dates, terms, rationale, confidence, and a source for each action, as of August 29, 2026. **The source of truth.** |
+| [`data/research_updates.csv`](data/research_updates.csv) | Later research. Each row is a complete record that replaces the table's row for that jurisdiction, or adds one, and says what changed and when. |
+| [`data/research_log_2026-09.md`](data/research_log_2026-09.md) | What the September re-check found, record by record, with sources. |
 | [`data/nc_datacenter_moratoria.geojson`](data/nc_datacenter_moratoria.geojson) | The map layer, built from the table (WGS 84). |
 | [`data/summary.json`](data/summary.json) | The counts above, recomputed on every build. |
 | [`data/map.png`](data/map.png) | The picture above, redrawn on every build. |
@@ -84,10 +98,10 @@ Boundaries download from the U.S. Census Bureau on first run. Pushing a change t
 the CSV rebuilds the layer, the summary, the picture, and the table at the top of
 this README automatically.
 
-Status is judged as of `RESEARCH_CUTOFF` in `build/build_layer.py`, not the day
-the build runs. When you add newer research, move that date forward in the same
-change; otherwise a moratorium adopted after it will show as ended. The notes
-under *Before you quote a number* are written by hand and need updating too.
+Status is judged as of `STATUS_AS_OF` in `build/build_layer.py`, not the day the build
+runs, and the build refuses to run if any row in `research_updates.csv` was researched
+after that date. When you add newer research, move the date forward in the same change.
+The notes under *Before you quote a number* are written by hand and need updating too.
 
 ## How the records were built
 
@@ -100,6 +114,13 @@ North Carolina, and had labeled several city actions as county actions.
 Every row carries a `confidence` rating for how well its dates are sourced, and a
 `status` for whether the action happened at all. They measure different things:
 a well-dated record can still be unconfirmed.
+
+The September 2026 update re-checked every county for news published through September 20,
+along with every jurisdiction that had a vote, hearing or expiration pending. It found eight
+more moratoria in effect, five jurisdictions newly weighing one, and two extensions that kept
+moratoria from lapsing — including Mount Airy's, which the arithmetic would otherwise have
+shown as expired. Where the only evidence was a single outlet or a specialist newsletter, the
+record says so and is outlined in black.
 
 ## Sources
 

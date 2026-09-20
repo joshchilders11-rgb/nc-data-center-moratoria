@@ -41,6 +41,7 @@
   .pop .cat { display: inline-block; padding: 1px 8px; border-radius: 10px; color: #fff; font-weight: 600; font-size: 12px; }
   .pop .cat.none { background: #fff; color: var(--muted); border: 1px solid var(--line); }
   .pop .flag { margin: 8px 0; padding: 6px 8px; background: #fff8c5; border-left: 3px solid #111; }
+  .pop .upd { margin: 8px 0; padding: 6px 8px; background: #ddf4ff; border-left: 3px solid #0969da; }
   .pop dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 8px 0; }
   .pop dt { color: var(--muted); }
   .pop dd { margin: 0; }
@@ -125,6 +126,9 @@
                       : '<span class="cat none">' + esc(p.category) + "</span>"];
     if (p.needs_confirmation === "yes") {
       html.push('<div class="flag"><strong>Needs confirmation.</strong> ' + esc(p.confirmation_note || "") + "</div>");
+    }
+    if (p.updated) {
+      html.push('<div class="upd"><strong>Updated ' + esc(p.updated) + ".</strong> " + esc(p.update_note || "") + "</div>");
     }
     var fields = [["Covers", p.covers], ["Duration", p.duration], ["Adopted", p.adopted], ["Expires", p.expires]];
     var dl = fields.filter(function (f) { return f[1]; })

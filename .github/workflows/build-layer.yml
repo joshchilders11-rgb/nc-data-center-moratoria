@@ -8,6 +8,7 @@ on:
     branches: [main]
     paths:
       - "data/nc_data_center_moratoriums.csv"
+      - "data/research_updates.csv"
       - "build/**"
       - ".github/workflows/build-layer.yml"
   workflow_dispatch:

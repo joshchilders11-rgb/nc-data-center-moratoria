@@ -4,13 +4,14 @@ Build the North Carolina data center moratoria layer from the research table.
 
     python build/build_layer.py
 
-Reads   data/nc_data_center_moratoriums.csv
+Reads   data/nc_data_center_moratoriums.csv    (research table, as of BASE_RESEARCH_DATE)
+        data/research_updates.csv              (later research, applied on top)
 Writes  data/nc_datacenter_moratoria.geojson   (map layer, styled for GitHub's viewer)
         data/summary.json                      (headline counts, recomputed every build)
 
 Boundaries come from the U.S. Census Bureau 2021 cartographic boundary files and
-are downloaded on first run. The CSV is the source of truth; the GeoJSON is
-derived from it and should never be edited by hand.
+are downloaded on first run. The two CSVs are the source of truth; the GeoJSON
+is derived from them and should never be edited by hand.
 
 This layer is an informative overlay. It records what local governments have
 done. It does not say whether any location is suitable for development, and it
@@ -31,13 +32,20 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
 CSV = ROOT / "data" / "nc_data_center_moratoriums.csv"
+UPDATES = ROOT / "data" / "research_updates.csv"
 GEOJSON = ROOT / "data" / "nc_datacenter_moratoria.geojson"
 SUMMARY = ROOT / "data" / "summary.json"
 CACHE = ROOT / "build" / ".cache"
 
-# Status is evaluated as of the research cutoff, not the day the build runs, so
-# the published snapshot is internally consistent with the research behind it.
-RESEARCH_CUTOFF = date(2026, 8, 29)
+# The research table is a snapshot as of BASE_RESEARCH_DATE. Each row of
+# research_updates.csv is a complete record from later research that replaces
+# the table's row for that jurisdiction, or adds one the table lacks. Status is
+# evaluated as of STATUS_AS_OF, the date of the latest statewide check, not the
+# day the build runs, so the published snapshot is internally consistent.
+BASE_RESEARCH_DATE = date(2026, 8, 29)
+STATUS_AS_OF = date(2026, 9, 20)
+UPDATE_COLUMNS = ["update_kind", "researched_on", "change_summary",
+                  "needs_confirmation", "expiration_note"]
 
 CENSUS = {
     "county": "https://www2.census.gov/geo/tiger/GENZ2021/shp/cb_2021_us_county_20m.zip",
@@ -76,7 +84,9 @@ ASSERTS_ADOPTION = {"adopted", "permanent_ban", "adopted_unverified"}
 
 # Records whose ACTION could not be confirmed against a primary source. These are
 # outlined in black on the map. The list follows the corrections log's
-# definition of record, minus Northampton County (see below).
+# definition of record, minus Northampton County (see below). A jurisdiction in
+# research_updates.csv takes its flag from that file's needs_confirmation
+# column instead, so later research can raise or clear a flag.
 NEEDS_CONFIRMATION = {
     "Clay County": "Adoption date, and whether the ban is permanent or temporary, are both "
                    "unconfirmed. The ordinance PDFs are image-only scans.",
@@ -147,6 +157,60 @@ def category(status: str, active) -> str:
     return CONSIDERING
 
 
+def load_records() -> pd.DataFrame:
+    """The research table with research_updates.csv applied."""
+    base = pd.read_csv(CSV, dtype="string", keep_default_na=True).dropna(how="all")
+    print(f"Read {len(base)} records from {CSV.name}")
+    blank = {c: pd.Series(pd.NA, index=base.index, dtype="string") for c in UPDATE_COLUMNS}
+    if not UPDATES.exists():
+        return base.assign(**blank)
+
+    upd = pd.read_csv(UPDATES, dtype="string", keep_default_na=True).dropna(how="all")
+    missing = [c for c in [*base.columns, *UPDATE_COLUMNS] if c not in upd.columns]
+    if missing:
+        sys.exit(f"{UPDATES.name} is missing columns: {', '.join(missing)}")
+    problems = [f"{n}: listed more than once"
+                for n in upd.loc[upd["jurisdiction"].duplicated(), "jurisdiction"]]
+    known = set(base["jurisdiction"])
+    for _, r in upd.iterrows():
+        name, kind = r["jurisdiction"], r["update_kind"]
+        if kind == "revised" and name not in known:
+            problems.append(f"{name}: marked revised, but {CSV.name} has no such record")
+        elif kind == "new" and name in known:
+            problems.append(f"{name}: marked new, but {CSV.name} already has it")
+        elif kind not in ("new", "revised"):
+            problems.append(f"{name}: update_kind must be 'new' or 'revised', not '{kind}'")
+        when = parse_date(r["researched_on"])
+        if when is None or when > STATUS_AS_OF:
+            problems.append(f"{name}: researched_on '{r['researched_on']}' is missing or later "
+                            f"than STATUS_AS_OF ({STATUS_AS_OF}) — move STATUS_AS_OF forward")
+        if pd.isna(r["change_summary"]):
+            problems.append(f"{name}: change_summary is empty")
+    if problems:
+        sys.exit(f"Refusing to build — problems in {UPDATES.name}:\n  " + "\n  ".join(problems))
+
+    kept = base[~base["jurisdiction"].isin(upd["jurisdiction"])].assign(**blank)
+    merged = pd.concat([kept, upd[[*base.columns, *UPDATE_COLUMNS]]], ignore_index=True)
+    kinds = upd["update_kind"].value_counts()
+    print(f"Applied {len(upd)} updates from {UPDATES.name} "
+          f"({kinds.get('revised', 0)} revised, {kinds.get('new', 0)} new)")
+    return merged
+
+
+def confirmation_note(row):
+    """Why a record still needs confirmation, or None. Updated records carry
+    their own flag; the rest keep the table's."""
+    if not pd.isna(row["update_kind"]):
+        return None if pd.isna(row["needs_confirmation"]) else str(row["needs_confirmation"])
+    return NEEDS_CONFIRMATION.get(str(row["jurisdiction"]))
+
+
+def expiration_note(row):
+    if not pd.isna(row["update_kind"]):
+        return None if pd.isna(row["expiration_note"]) else str(row["expiration_note"])
+    return EXPIRATION_UNCONFIRMED.get(str(row["jurisdiction"]))
+
+
 def boundaries(kind: str) -> gpd.GeoDataFrame:
     CACHE.mkdir(parents=True, exist_ok=True)
     url = CENSUS[kind]
@@ -209,23 +273,30 @@ def style(level: str, cat: str, flagged: bool) -> dict:
 
 
 def main() -> None:
-    df = pd.read_csv(CSV, dtype="string", keep_default_na=True).dropna(how="all")
-    print(f"Read {len(df)} records from {CSV.name}")
+    df = load_records()
 
-    df["_active"] = [in_effect(r, RESEARCH_CUTOFF) for _, r in df.iterrows()]
+    df["_active"] = [in_effect(r, STATUS_AS_OF) for _, r in df.iterrows()]
     df["_category"] = [category(s, a) for s, a in zip(df["status"], df["_active"])]
+    # Kept as an explicit boolean: a column built from None and strings turns the
+    # None into NaN, and NaN is truthy, which would flag every record.
+    notes = [confirmation_note(r) for _, r in df.iterrows()]
+    df["_flagged"] = [n is not None for n in notes]
+    df["_flag_note"] = [n or "" for n in notes]
     geometry = match_geometry(df)
 
     features = []
     for idx, r in df.iterrows():
         name, level, cat = str(r["jurisdiction"]), str(r["level"]), r["_category"]
-        flagged = name in NEEDS_CONFIRMATION
+        flagged = bool(r["_flagged"])
         props = {"name": name, "level": LEVEL_LABEL[level],
                  "county": None if level == "tribal" else str(r["county"]),
                  "category": cat}
         if flagged:
             props["needs_confirmation"] = "yes"
-            props["confirmation_note"] = NEEDS_CONFIRMATION[name]
+            props["confirmation_note"] = str(r["_flag_note"])
+        if not pd.isna(r["update_kind"]):
+            props["updated"] = str(r["researched_on"])
+            props["update_note"] = str(r["change_summary"])
         props["status"] = str(r["status"])
         for key, col in (("covers", "covers"), ("duration", "duration_label"),
                          ("adopted", "adopted_date")):
@@ -246,8 +317,9 @@ def main() -> None:
                 props["expires"] = "Indefinite — no end date set"
             else:
                 props["expires"] = "End date unknown"
-        if name in EXPIRATION_UNCONFIRMED:
-            props["expiration_note"] = EXPIRATION_UNCONFIRMED[name]
+        note = expiration_note(r)
+        if note:
+            props["expiration_note"] = note
         props["confidence"] = str(r["confidence"])
         if not pd.isna(r["source_url"]):
             props["source"] = str(r["source_url"])
@@ -289,31 +361,37 @@ def main() -> None:
     if (effect["level"] == "tribal").any():
         counties_in_effect |= {"Cherokee", "Graham", "Haywood", "Jackson", "Swain"}
     eii = df["expiration_is_inferred"].str.upper()
+    adopted = effect["adopted_date"].fillna("")
     summary = {
-        "status_as_of": RESEARCH_CUTOFF.isoformat(),
+        "status_as_of": STATUS_AS_OF.isoformat(),
+        "base_research_as_of": BASE_RESEARCH_DATE.isoformat(),
         "records": len(df),
+        "records_updated_after_base_research": int(df["update_kind"].notna().sum()),
         "by_category": {c: int(counts.get(c, 0)) for c in (IN_EFFECT, CONSIDERING, ENDED_CAT, NO_ACTION)},
         "in_effect_by_level": {k: int(v) for k, v in effect["level"].value_counts().items()},
         # Counted as "needing confirmation" rather than "confirmed": a record that is
         # not flagged is sourced, but not necessarily to a primary government record.
-        "in_effect_needing_confirmation": int(effect["jurisdiction"].isin(NEEDS_CONFIRMATION).sum()),
-        "needs_confirmation": len(NEEDS_CONFIRMATION),
+        "in_effect_needing_confirmation": int(effect["_flagged"].sum()),
+        "needs_confirmation": int(df["_flagged"].sum()),
         "counties_containing_a_moratorium_in_effect": len(counties_in_effect),
         "expiration_dates_printed_in_source": int((eii == "FALSE").sum()),
         "expiration_dates_estimated": int((eii == "TRUE").sum()),
         "chose_regulation_instead": int((df["status"] == "regulated_no_moratorium").sum()),
-        "adopted_in_august_2026": int(effect["adopted_date"].fillna("").str.startswith("2026-08").sum()),
+        "adopted_in_august_2026": int(adopted.str.startswith("2026-08").sum()),
+        "adopted_after_base_research": int((adopted > BASE_RESEARCH_DATE.isoformat()).sum()),
     }
     collection = {
         "type": "FeatureCollection",
         "metadata": {
             "title": "North Carolina data center moratoria",
-            "status_as_of": RESEARCH_CUTOFF.isoformat(),
+            "status_as_of": STATUS_AS_OF.isoformat(),
+            "base_research_as_of": BASE_RESEARCH_DATE.isoformat(),
             "note": "Informative overlay. Records local government actions only; not a "
                     "statement of site suitability and not an exclusion filter. Estimated "
                     "expiration dates are labelled '(estimated)'. Records outlined in black "
-                    "need confirmation against a primary source.",
-            "source_table": "data/nc_data_center_moratoriums.csv",
+                    "need confirmation against a primary source. Records changed by research "
+                    "after the base table carry 'updated' and 'update_note'.",
+            "source_tables": ["data/nc_data_center_moratoriums.csv", "data/research_updates.csv"],
             "boundaries": "U.S. Census Bureau, 2021 cartographic boundary files",
         },
         "features": collection["features"],
@@ -334,12 +412,14 @@ def main() -> None:
                 f"| &nbsp;&nbsp;county · municipal · tribal | {lv.get('county', 0)} · {lv.get('municipal', 0)} · {lv.get('tribal', 0)} |",
                 f"| Counties containing one | {summary['counties_containing_a_moratorium_in_effect']} of 100 |",
                 f"| Adopted in August 2026 alone | {summary['adopted_in_august_2026']} |",
+                f"| Adopted after {summary['base_research_as_of']} | {summary['adopted_after_base_research']} |",
                 f"| Under consideration | {by[CONSIDERING]} |",
                 f"| Ended, declined, or replaced | {by[ENDED_CAT]} |",
                 f"| &nbsp;&nbsp;of which chose permanent regulation instead | {summary['chose_regulation_instead']} |",
                 f"| Checked, no action found | {by[NO_ACTION]} |",
                 f"| Records needing confirmation | {summary['needs_confirmation']} |",
                 f"| Expiration dates estimated vs. printed in source | {summary['expiration_dates_estimated']} vs. {summary['expiration_dates_printed_in_source']} |",
+                f"| Records changed by research after {summary['base_research_as_of']} | {summary['records_updated_after_base_research']} |",
                 end,
             ])
             head, rest = text.split(start, 1)
