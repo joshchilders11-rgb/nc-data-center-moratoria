@@ -106,10 +106,7 @@ The notes under *Before you quote a number* are written by hand and need updatin
 ## How the records were built
 
 Records were checked against agenda portals, adopted ordinances, and local
-news, preferring primary government records where they could be retrieved. The
-work corrected the source document it started from, which had attributed actions
-by identically named counties in **Georgia, Florida, Texas, and Arkansas** to
-North Carolina, and had labeled several city actions as county actions.
+news, preferring primary government records where they could be retrieved. 
 
 Every row carries a `confidence` rating for how well its dates are sourced, and a
 `status` for whether the action happened at all. They measure different things:
