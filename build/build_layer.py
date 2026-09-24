@@ -13,9 +13,8 @@ Boundaries come from the U.S. Census Bureau 2021 cartographic boundary files and
 are downloaded on first run. The two CSVs are the source of truth; the GeoJSON
 is derived from them and should never be edited by hand.
 
-This layer is an informative overlay. It records what local governments have
-done. It does not say whether any location is suitable for development, and it
-is not an exclusion filter.
+The layer records what local governments have decided about new data centers.
+It says nothing about where data centers exist or are planned.
 """
 
 from __future__ import annotations
@@ -43,7 +42,7 @@ CACHE = ROOT / "build" / ".cache"
 # evaluated as of STATUS_AS_OF, the date of the latest statewide check, not the
 # day the build runs, so the published snapshot is internally consistent.
 BASE_RESEARCH_DATE = date(2026, 8, 29)
-STATUS_AS_OF = date(2026, 9, 20)
+STATUS_AS_OF = date(2026, 9, 24)
 UPDATE_COLUMNS = ["update_kind", "researched_on", "change_summary",
                   "needs_confirmation", "expiration_note"]
 
@@ -53,7 +52,7 @@ CENSUS = {
     "tribal": "https://www2.census.gov/geo/tiger/GENZ2021/shp/cb_2021_us_aiannh_500k.zip",
 }
 NC_FIPS = "37"
-INCORPORATED_LSAD = {"25", "43", "47"}   # city, town, village — excludes CDPs
+INCORPORATED_LSAD = {"25", "43", "47"}   # city, town, village (excludes CDPs)
 QUALLA_GEOID = "0990"                     # Eastern Cherokee Reservation (Qualla Boundary)
 
 # --- What each status means for whether a restriction is in force ------------
@@ -97,8 +96,8 @@ NEEDS_CONFIRMATION = {
     "Watauga County": "No primary government record could be retrieved. Rests on two news "
                       "sources and a tracker.",
 }
-# The action is confirmed; only the end date is uncertain. Not outlined — the
-# date is already labelled as estimated.
+# The action is confirmed; only the end date is uncertain. Not outlined, since
+# the date is already labelled as estimated.
 EXPIRATION_UNCONFIRMED = {
     "Northampton County": "Adoption, the 32-month term and the unanimous vote are confirmed. "
                           "The end date is not: the term was changed on the floor.",
@@ -118,7 +117,7 @@ def parse_date(value):
 
 
 def in_effect(row, as_of: date):
-    """True / False / None. None means the data cannot say — never guessed."""
+    """True / False / None. None means the data cannot say, and is never guessed."""
     meaning = STATUS_MEANING.get(row["status"])
     if meaning is None:
         sys.exit(f"Unrecognized status '{row['status']}' for {row['jurisdiction']}. "
@@ -183,11 +182,11 @@ def load_records() -> pd.DataFrame:
         when = parse_date(r["researched_on"])
         if when is None or when > STATUS_AS_OF:
             problems.append(f"{name}: researched_on '{r['researched_on']}' is missing or later "
-                            f"than STATUS_AS_OF ({STATUS_AS_OF}) — move STATUS_AS_OF forward")
+                            f"than STATUS_AS_OF ({STATUS_AS_OF}); move STATUS_AS_OF forward")
         if pd.isna(r["change_summary"]):
             problems.append(f"{name}: change_summary is empty")
     if problems:
-        sys.exit(f"Refusing to build — problems in {UPDATES.name}:\n  " + "\n  ".join(problems))
+        sys.exit(f"Refusing to build. Problems in {UPDATES.name}:\n  " + "\n  ".join(problems))
 
     kept = base[~base["jurisdiction"].isin(upd["jurisdiction"])].assign(**blank)
     merged = pd.concat([kept, upd[[*base.columns, *UPDATE_COLUMNS]]], ignore_index=True)
@@ -251,7 +250,7 @@ def match_geometry(rows: pd.DataFrame) -> gpd.GeoSeries:
         else:
             geoms.append(hit.geometry.iloc[0])
     if missing:
-        sys.exit("Boundary matching failed — refusing to publish a partial layer:\n  "
+        sys.exit("Boundary matching failed; refusing to publish a partial layer:\n  "
                  + "\n  ".join(missing))
     return gpd.GeoSeries(geoms, crs=counties.crs, index=rows.index)
 
@@ -312,9 +311,9 @@ def main() -> None:
             # indefinitely, and a record whose end date is simply unknown.
             raw = "" if pd.isna(r["expiration_date"]) else str(r["expiration_date"]).lower()
             if r["status"] == "permanent_ban":
-                props["expires"] = "Permanent ban — no end date"
+                props["expires"] = "Permanent ban, no end date"
             elif "indefinite" in raw or str(r["duration_label"]).lower() == "indefinite":
-                props["expires"] = "Indefinite — no end date set"
+                props["expires"] = "Indefinite, no end date set"
             else:
                 props["expires"] = "End date unknown"
         note = expiration_note(r)
@@ -327,7 +326,7 @@ def main() -> None:
         features.append((idx, level, flagged, name, props))
 
     # Draw order: counties beneath municipalities and the tribal nation, and
-    # outlined records above their unflagged neighbours.
+    # outlined records above their unflagged neighbors.
     order = {"county": 0, "municipal": 1, "tribal": 2}
     features.sort(key=lambda f: (order[f[1]], f[2], f[3]))
 
@@ -386,8 +385,8 @@ def main() -> None:
             "title": "North Carolina data center moratoria",
             "status_as_of": STATUS_AS_OF.isoformat(),
             "base_research_as_of": BASE_RESEARCH_DATE.isoformat(),
-            "note": "Informative overlay. Records local government actions only; not a "
-                    "statement of site suitability and not an exclusion filter. Estimated "
+            "note": "Records what local governments have decided about new data centers; "
+                    "it says nothing about where data centers exist or are planned. Estimated "
                     "expiration dates are labelled '(estimated)'. Records outlined in black "
                     "need confirmation against a primary source. Records changed by research "
                     "after the base table carry 'updated' and 'update_note'.",
@@ -409,7 +408,7 @@ def main() -> None:
                 "|---|---:|",
                 f"| **Moratoria or bans in effect** | **{by[IN_EFFECT]}** |",
                 f"| &nbsp;&nbsp;of which still need confirmation | {summary['in_effect_needing_confirmation']} |",
-                f"| &nbsp;&nbsp;county · municipal · tribal | {lv.get('county', 0)} · {lv.get('municipal', 0)} · {lv.get('tribal', 0)} |",
+                f"| &nbsp;&nbsp;county / municipal / tribal | {lv.get('county', 0)} / {lv.get('municipal', 0)} / {lv.get('tribal', 0)} |",
                 f"| Counties containing one | {summary['counties_containing_a_moratorium_in_effect']} of 100 |",
                 f"| Adopted in August 2026 alone | {summary['adopted_in_august_2026']} |",
                 f"| Adopted after {summary['base_research_as_of']} | {summary['adopted_after_base_research']} |",

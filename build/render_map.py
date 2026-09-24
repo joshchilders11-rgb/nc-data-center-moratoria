@@ -87,15 +87,15 @@ def main() -> None:
     fig.text(0.02, 0.925, "North Carolina data center moratoria", fontsize=21,
              fontweight="bold", color=INK, va="center")
     fig.text(0.02, 0.862,
-             f"Local government actions as of {as_of:%B} {as_of.day}, {as_of.year}  ·  "
-             f"{in_effect} moratoria or bans in effect, {pending} of them still needing confirmation",
+             f"Local government actions as of {as_of:%B} {as_of.day}, {as_of.year}. "
+             f"{in_effect} moratoria or bans in effect, {pending} of them still needing confirmation.",
              fontsize=12, color=MUTED, va="center")
     fig.text(0.02, 0.05,
-             "Informative overlay: records what local governments have done, not whether any site "
-             "is suitable.",
+             "Shows what local governments have decided about new data centers, not where data "
+             "centers are.",
              fontsize=8.5, color=MUTED, va="center")
     fig.text(0.02, 0.022,
-             "Data: Josh Childers, CC BY 4.0  ·  Boundaries: U.S. Census Bureau  ·  "
+             "Data: Josh Childers, CC BY 4.0.  Boundaries: U.S. Census Bureau.  "
              "github.com/joshchilders11-rgb/nc-data-center-moratoria",
              fontsize=8.5, color=MUTED, va="center")
 

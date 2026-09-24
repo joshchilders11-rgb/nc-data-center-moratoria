@@ -1,7 +1,7 @@
 # Data license
 
-The data in this directory — `nc_data_center_moratoriums.csv`,
-`nc_datacenter_moratoria.geojson`, and `summary.json` — is licensed under the
+The data in this directory (`nc_data_center_moratoriums.csv`, `research_updates.csv`,
+`nc_datacenter_moratoria.geojson`, `summary.json` and `map.png`) is licensed under the
 **Creative Commons Attribution 4.0 International License (CC BY 4.0)**.
 
 You may share and adapt it for any purpose, including commercially, as long as you

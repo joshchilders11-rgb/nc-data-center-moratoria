@@ -61,11 +61,11 @@
 <div id="header" class="panel">
   <h1>North Carolina data center moratoria</h1>
   <p class="headline" id="headline">Loading…</p>
-  <p class="extra">Click any shape for its details. An informative overlay: it records what
-    local governments have done, not whether any site is suitable.</p>
+  <p class="extra">Click any shape for its details. The map shows what local governments have
+    decided about new data centers, not where data centers are.</p>
   <p class="links"><a href="https://github.com/joshchilders11-rgb/nc-data-center-moratoria">Data, method &amp; caveats</a>
-    · <a href="data/nc_data_center_moratoriums.csv">CSV</a>
-    · <a href="data/nc_datacenter_moratoria.geojson">GeoJSON</a></p>
+    | <a href="data/nc_data_center_moratoriums.csv">CSV</a>
+    | <a href="data/nc_datacenter_moratoria.geojson">GeoJSON</a></p>
 </div>
 
 <details id="legend" class="panel" open>
@@ -118,7 +118,7 @@
   }
 
   function popup(p) {
-    var where = p.level === "Municipality" ? "Municipality · " + p.county + " County" : p.level;
+    var where = p.level === "Municipality" ? "Municipality in " + p.county + " County" : p.level;
     var color = COLOR[p.category];
     var html = ['<div class="pop"><h3>' + esc(p.name) + "</h3>",
                 '<div class="meta">' + esc(where) + "</div>",
