@@ -1,25 +1,25 @@
 {
-  "status_as_of": "2026-09-20",
+  "status_as_of": "2026-09-24",
   "base_research_as_of": "2026-08-29",
-  "records": 137,
-  "records_updated_after_base_research": 19,
+  "records": 139,
+  "records_updated_after_base_research": 24,
   "by_category": {
-    "Moratorium or ban in effect": 50,
-    "Under consideration": 11,
+    "Moratorium or ban in effect": 53,
+    "Under consideration": 10,
     "Ended, declined, or replaced": 11,
     "No action found": 65
   },
   "in_effect_by_level": {
-    "municipal": 27,
+    "municipal": 30,
     "county": 22,
     "tribal": 1
   },
-  "in_effect_needing_confirmation": 6,
-  "needs_confirmation": 9,
+  "in_effect_needing_confirmation": 3,
+  "needs_confirmation": 4,
   "counties_containing_a_moratorium_in_effect": 40,
   "expiration_dates_printed_in_source": 14,
-  "expiration_dates_estimated": 34,
+  "expiration_dates_estimated": 37,
   "chose_regulation_instead": 7,
-  "adopted_in_august_2026": 13,
-  "adopted_after_base_research": 5
+  "adopted_in_august_2026": 15,
+  "adopted_after_base_research": 6
 }
